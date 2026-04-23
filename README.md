@@ -1,6 +1,6 @@
 # Mattermost Skill
 
-Portable skill for searching and extracting information from Mattermost via REST API v4. Works with Claude Code and Cursor from a single source of truth.
+Portable skill for searching and extracting information from Mattermost via REST API v4.
 
 ## Features
 
@@ -9,25 +9,6 @@ Portable skill for searching and extracting information from Mattermost via REST
 - Research strategies for deep investigation across conversations
 - Zero external dependencies — pure Python stdlib
 - One skill body (`skill/SKILL.md`), mounted into each harness via symlink
-
-## Structure
-
-```
-├── .env.example                      # Config template
-├── README.md
-├── cursor/
-│   └── mattermost-skill.mdc          → symlink to ../skill/SKILL.md
-└── skill/                            # Source of truth — mount via symlink
-    ├── SKILL.md                      # Skill body: API reference, scripts, examples
-    ├── references/
-    │   └── STRATEGY.md               # Research strategies and task templates
-    └── scripts/
-        ├── _client.py                # Shared HTTP client
-        ├── get_posts.py
-        ├── search_posts.py
-        ├── filter_posts.py
-        └── ...
-```
 
 The frontmatter of `skill/SKILL.md` includes fields for both Claude Code (`name`, `allowed-tools`) and Cursor (`globs`, `alwaysApply`). Each harness reads what it understands and ignores the rest.
 
@@ -40,13 +21,37 @@ cp .env.example skill/scripts/.env
 # Edit skill/scripts/.env with MATTERMOST_URL, MATTERMOST_TOKEN, MATTERMOST_TEAM_ID
 ```
 
+After this step the repo should look like:
+
+```
+mattermost-skill/
+├── skill/
+│   ├── SKILL.md
+│   ├── references/STRATEGY.md
+│   └── scripts/
+│       ├── _client.py
+│       ├── .env             # ← your copy, not tracked by git
+│       └── ...
+└── cursor/mattermost-skill.mdc  → ../skill/SKILL.md
+```
+
 ### Mount in Claude Code
 
 ```bash
 ln -s "$(pwd)/skill" ~/.claude/skills/mattermost-skill
 ```
 
-Claude Code auto-discovers it on the next session. Check: type `/skills` in Claude Code — `mattermost` should be listed.
+Verify:
+
+```bash
+ls -la ~/.claude/skills/mattermost-skill
+# → lrwxr-xr-x  ... mattermost-skill -> /Users/you/Projects/mattermost-skill/skill
+
+ls ~/.claude/skills/mattermost-skill/
+# → SKILL.md  references  scripts
+```
+
+Claude Code auto-discovers the skill on the next session. Check: type `/skills` — `mattermost` should be listed.
 
 ### Mount in Cursor
 
@@ -56,6 +61,21 @@ Symlink the `.mdc` into your project's Cursor rules folder:
 # from inside your Cursor project root
 mkdir -p .cursor/rules
 ln -s ~/Projects/mattermost-skill/cursor/mattermost-skill.mdc .cursor/rules/
+```
+
+Verify the chain resolves all the way to the source:
+
+```bash
+ls -la .cursor/rules/mattermost-skill.mdc
+# → lrwxr-xr-x  ... -> /Users/you/Projects/mattermost-skill/cursor/mattermost-skill.mdc
+
+readlink -f .cursor/rules/mattermost-skill.mdc
+# → /Users/you/Projects/mattermost-skill/skill/SKILL.md
+
+head -3 .cursor/rules/mattermost-skill.mdc
+# → ---
+#   name: mattermost
+#   description: >
 ```
 
 This creates a symlink-to-symlink chain (`.cursor/rules/mattermost-skill.mdc` → repo's `cursor/mattermost-skill.mdc` → `skill/SKILL.md`). The OS resolves the chain transparently; editing `skill/SKILL.md` updates every mounted rule automatically.
