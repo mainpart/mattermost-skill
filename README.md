@@ -50,17 +50,23 @@ Claude Code auto-discovers it on the next session. Check: type `/skills` in Clau
 
 ### Mount in Cursor
 
-Copy the `.mdc` symlink (or the file it points to) into your project's Cursor rules folder:
+Symlink the `.mdc` into your project's Cursor rules folder:
 
 ```bash
 # from inside your Cursor project root
 mkdir -p .cursor/rules
-cp -P ~/Projects/mattermost-skill/cursor/mattermost-skill.mdc .cursor/rules/
+ln -s ~/Projects/mattermost-skill/cursor/mattermost-skill.mdc .cursor/rules/
 ```
 
-`cp -P` preserves the symlink — Cursor reads it as a rule; editing `skill/SKILL.md` updates the rule automatically. If your host has issues with symlinks, copy the resolved file instead: `cp -L ... .cursor/rules/`.
+This creates a symlink-to-symlink chain (`.cursor/rules/mattermost-skill.mdc` → repo's `cursor/mattermost-skill.mdc` → `skill/SKILL.md`). The OS resolves the chain transparently; editing `skill/SKILL.md` updates every mounted rule automatically.
 
-Alternative: mount the whole skill folder as a Cursor skill (experimental, sometimes flaky on Remote SSH):
+**Don't use `cp -P`** — it copies the symlink verbatim, but the original is a relative link (`../skill/SKILL.md`), and a relative link inside `.cursor/rules/` resolves to the wrong place and breaks. If you need a standalone copy (e.g. to commit into a project without symlinks), use `cp -L` to dereference:
+
+```bash
+cp -L ~/Projects/mattermost-skill/cursor/mattermost-skill.mdc .cursor/rules/
+```
+
+Alternative — mount the whole skill folder as a Cursor skill (experimental, sometimes flaky on Remote SSH):
 
 ```bash
 ln -s ~/Projects/mattermost-skill/skill .cursor/skills/mattermost-skill
