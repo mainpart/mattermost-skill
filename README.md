@@ -1,4 +1,4 @@
-# Mattermost Agent for Claude Code
+# Mattermost Skill for Claude Code
 
 Claude Code skill for searching and extracting information from Mattermost via REST API v4.
 
@@ -13,15 +13,15 @@ Claude Code skill for searching and extracting information from Mattermost via R
 
 ```bash
 # Clone
-git clone https://github.com/YOUR_USERNAME/mattermost-agent.git
-cd mattermost-agent
+git clone https://github.com/mainpart/mattermost-skill.git
+cd mattermost-skill
 
 # Create config
 cp .env.example skill/scripts/.env
 # Edit skill/scripts/.env with your Mattermost URL, token, and team ID
 
 # Symlink into Claude Code skills
-ln -s "$(pwd)/skill" ~/.claude/skills/mattermost-agent
+ln -s "$(pwd)/skill" ~/.claude/skills/mattermost-skill
 ```
 
 The `.env` file is searched in order: `skill/scripts/` → `skill/` → project working directory. 
@@ -30,18 +30,30 @@ Alternatively, set environment variables `MATTERMOST_URL`, `MATTERMOST_TOKEN`, `
 ## Structure
 
 ```
-├── .env.example          # Config template
+├── .env.example                      # Config template
 ├── README.md
-└── skill/                # Symlinked to ~/.claude/skills/mattermost-agent
-    ├── SKILL.md          # API reference: scripts, parameters, examples
-    ├── STRATEGY.md       # Research strategies and task templates
+├── cursor/
+│   └── mattermost-agent.mdc          # Cursor rules variant (copy to .cursor/rules/)
+└── skill/                            # Symlinked to ~/.claude/skills/mattermost-skill
+    ├── SKILL.md                      # API reference: scripts, parameters, examples
+    ├── references/
+    │   └── STRATEGY.md               # Research strategies and task templates
     └── scripts/
-        ├── _client.py    # Shared HTTP client
+        ├── _client.py                # Shared HTTP client
         ├── get_posts.py
         ├── search_posts.py
         ├── filter_posts.py
         └── ...
 ```
+
+## Use in Cursor
+
+Cursor doesn't fully support the `SKILL.md` format yet. Two options:
+
+1. **As a Cursor rule** (recommended): copy `cursor/mattermost-agent.mdc` to `.cursor/rules/` in your project.
+2. **As a symlinked skill** (partial support): `ln -s "$(pwd)/skill" .cursor/skills/mattermost-agent` in the project root.
+
+Option 1 is more reliable; the scripts are invoked from `~/Projects/mattermost-skill/skill/scripts/` or wherever you cloned the repo — set `MATTERMOST_SKILL_DIR` if the location is non-standard.
 
 ## Usage
 
