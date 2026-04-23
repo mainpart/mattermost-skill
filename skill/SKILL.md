@@ -1,24 +1,30 @@
 ---
 name: mattermost
 description: >
-  Поиск и извлечение информации из Mattermost.
+  Поиск и извлечение информации из Mattermost через REST API v4.
   Скрипты для API: поиск постов, тредов, пользователей, каналов, файлов.
-  Активируй этот скилл когда упоминается задача связанная с mattermost или ссылки вида https://{mattermost domain}/{team}/pl/{id-поста matermost}.
+  Активируй когда упоминается Mattermost или встречаются ссылки вида https://{domain}/{team}/pl/{post_id}.
 allowed-tools: ["Bash", "Read", "WebFetch"]
+globs: []
+alwaysApply: false
 ---
 
 # Mattermost Skill
 
-Набор Python-скриптов для работы с Mattermost REST API v4. 
-**ОБЯЗАТЕЛЬНО: перед любой работой с Mattermost загрузи `references/STRATEGY.md` из этой же папки со скиллом.** 
+Набор Python-скриптов для работы с Mattermost REST API v4.
+
+**ОБЯЗАТЕЛЬНО:** перед любой работой с Mattermost загрузи `<skill_dir>/references/STRATEGY.md` (лежит в подпапке `references/` рядом с этим файлом).
 
 
 ## Рабочая директория
 
-**Все скрипты запускать из папки `scripts/` которая находится рядом с агента:**
+Скрипты и `references/` лежат рядом с этим файлом — в той же директории, где находится `SKILL.md`. Дальше `<skill_dir>` обозначает эту папку.
+
 ```bash
-cd <SKILL.MD directory>/scripts && python get_posts ....
+cd <skill_dir>/scripts && python get_posts.py ...
 ```
+
+Если скилл подключён симлинком (из `~/.claude/skills/`, `.cursor/rules/` или другой директории harness'а) — `<skill_dir>` всё равно резолвится в реальную папку, где лежит этот файл.
 
 ## Формат параметров
 
@@ -146,7 +152,7 @@ python get_reactions.py --post_id:abc123
 
 ## Стратегия исследования
 
-**ОБЯЗАТЕЛЬНО:** Перед любой работой загрузи `references/STRATEGY.md` — стратегия поиска, работа со ссылками, файлами, людьми. Без неё качество ответа будет неполным.
+**ОБЯЗАТЕЛЬНО:** Перед любой работой загрузи `<skill_dir>/references/STRATEGY.md` — стратегия поиска, работа со ссылками, файлами, людьми. Без неё качество ответа будет неполным.
 
 ## Если нужного метода нет
 
