@@ -1,0 +1,171 @@
+---
+description: Поиск и извлечение информации из Mattermost через REST API v4. Посты, треды, пользователи, каналы, файлы, реакции. Активируй когда в задаче упоминается Mattermost или встречаются ссылки вида https://{domain}/{team}/pl/{post_id}.
+globs: []
+alwaysApply: false
+---
+
+# Mattermost Skill
+
+Набор Python-скриптов для работы с Mattermost REST API v4.
+
+**ОБЯЗАТЕЛЬНО:** перед любой работой с Mattermost прочитай `references/STRATEGY.md` из папки скилла — без неё качество ответа будет неполным.
+
+## Рабочая директория
+
+Ищи скрипты в одном из путей (в порядке приоритета):
+
+1. `.cursor/skills/mattermost-agent/scripts/` — если скилл симлинкнут в проект
+2. `~/Projects/mattermost-agent/skill/scripts/` — глобальная установка
+3. Путь указан в переменной окружения `MATTERMOST_SKILL_DIR`
+
+Запуск:
+```bash
+cd <scripts_dir> && python get_posts.py ...
+```
+
+Аналогично для `references/STRATEGY.md` — лежит рядом с `scripts/`.
+
+## Формат параметров
+
+Два взаимозаменяемых способа:
+
+```bash
+# --key:value
+python get_posts.py --channel_id:abc123 --per_page:30
+
+# JSON-объект
+python get_posts.py '{"channel_id":"abc123","per_page":30}'
+```
+
+**Жирным** выделены обязательные параметры. Остальные опциональны.
+
+## Скрипты
+
+### Пользователи
+
+| Скрипт | Параметры | Описание |
+|--------|-----------|----------|
+| `get_me.py` | — | Текущий пользователь |
+| `get_user.py` | **`user_id`** или **`username`** (одно из двух) | Профиль по ID или username |
+| `search_users.py` | **`term`**, `team_id`, `limit` | Поиск пользователей |
+| `get_user_status.py` | **`user_id`** | Статус (online/away/dnd/offline) |
+| `set_user_status.py` | **`user_id`**, **`status`** (online\|away\|dnd\|offline) | Установить статус |
+
+### Команды
+
+| Скрипт | Параметры | Описание |
+|--------|-----------|----------|
+| `get_my_teams.py` | — | Команды текущего пользователя |
+
+### Каналы
+
+| Скрипт | Параметры | Описание |
+|--------|-----------|----------|
+| `get_channels.py` | `team_id`, `page`, `per_page` | Публичные каналы команды |
+| `get_my_channels.py` | `team_id` | Каналы где я участник |
+| `get_channel_by_name.py` | **`channel_name`**, `team_id` | Канал по slug-имени |
+| `search_channels.py` | **`term`**, `team_id` | Поиск каналов |
+| `create_channel.py` | **`display_name`**, **`name`**, `type` (O\|P), `team_id`, `purpose`, `header` | Создать канал |
+| `create_direct_channel.py` | **`user_ids`** (JSON-массив) | Создать ЛС (2 id) или групповой (3-8 id) |
+
+### Посты
+
+| Скрипт | Параметры | Описание |
+|--------|-----------|----------|
+| `get_posts.py` | **`channel_id`**, `page`, `per_page`, `since`, `before`, `after` | Посты в канале (newest first) |
+| `get_post_thread.py` | **`post_id`** | Тред целиком |
+| `search_posts.py` | **`terms`**, `team_id`, `page`, `per_page` | Поиск постов |
+| `get_unread.py` | **`channel_id`** | Непрочитанные посты |
+| `get_pinned_posts.py` | **`channel_id`** | Закреплённые посты |
+| `create_post.py` | **`channel_id`**, **`message`**, `root_id`, `file_ids` (JSON), `props` (JSON) | Создать пост |
+| `update_post.py` | **`post_id`**, `message`, `file_ids` (JSON), `props` (JSON) | Обновить пост |
+| `delete_post.py` | **`post_id`** | Удалить пост |
+| `pin_post.py` | **`post_id`** | Закрепить пост |
+| `unpin_post.py` | **`post_id`** | Открепить пост |
+
+Операторы поиска: `from:username`, `in:channel`, `before:YYYY-MM-DD`, `after:YYYY-MM-DD`, `"точная фраза"`.
+
+### Реакции
+
+| Скрипт | Параметры | Описание |
+|--------|-----------|----------|
+| `get_reactions.py` | **`post_id`** | Реакции на пост |
+| `add_reaction.py` | **`user_id`**, **`post_id`**, **`emoji_name`** | Добавить реакцию |
+| `remove_reaction.py` | **`user_id`**, **`post_id`**, **`emoji_name`** | Удалить реакцию |
+
+### Файлы
+
+| Скрипт | Параметры | Описание |
+|--------|-----------|----------|
+| `get_file_info.py` | **`file_id`** | Метаданные файла |
+| `get_file.py` | **`file_id`**, `save_path` | Скачать файл (без save_path — в stdout) |
+| `upload_file.py` | **`channel_id`**, **`file_path`**, `filename` | Загрузить файл |
+
+### Фильтры (stdin → stdout)
+
+| Фильтр | Вход | Описание |
+|--------|------|----------|
+| `filter_posts.py` | post list | id, user_id, channel_id, message, create_at, root_id, reply_count, files |
+| `filter_thread.py` | thread | hoist channel_id/root_id, убрать дубли |
+| `filter_users.py` | user(s) | id, username, first_name, last_name, nickname, email, position, roles |
+| `filter_channels.py` | channel(s) | id, type, display_name, name, header, purpose, team_id |
+
+## Примеры pipe
+
+```bash
+# Кто я
+python get_me.py | python filter_users.py
+
+# Поиск постов и фильтрация
+python search_posts.py --terms:"архитектура кредов" | python filter_posts.py
+
+# Тред целиком
+python get_post_thread.py --post_id:abc123 | python filter_thread.py
+
+# Каналы с "архитектур" в названии
+python search_channels.py --term:архитектур | python filter_channels.py
+
+# Посты в канале
+python get_posts.py --channel_id:abc123 --per_page:30 | python filter_posts.py
+
+# Поиск пользователя и его профиль
+python search_users.py --term:Красников | python filter_users.py
+
+# Канал по имени
+python get_channel_by_name.py --channel_name:town-square | python filter_channels.py
+
+# Закреплённые посты
+python get_pinned_posts.py --channel_id:abc123 | python filter_posts.py
+
+# Реакции на пост
+python get_reactions.py --post_id:abc123
+```
+
+## team_id
+
+Если `--team_id` не указан, используется `MATTERMOST_TEAM_ID` из `.env` (файл лежит рядом со скриптами, не коммитится).
+
+## Личные сообщения (DM)
+
+Если нужно прочитать личку с @username: `get_me.py` → свой id, `get_user.py --username:X` → id собеседника, `create_direct_channel.py` с обоими id (идемпотентная операция, вернёт существующий канал) → `get_posts.py` по полученному channel_id.
+
+## Стратегия исследования
+
+**ОБЯЗАТЕЛЬНО:** Перед любой работой загрузи `references/STRATEGY.md` — стратегия поиска, работа со ссылками, файлами, людьми. Без неё качество ответа будет неполным.
+
+## Если нужного метода нет
+
+Используй `curl` напрямую (токен в `.env` рядом со скриптами):
+
+```bash
+curl -s -H "Authorization: Bearer $MATTERMOST_TOKEN" "$MATTERMOST_URL/api/v4/..."
+```
+
+Документация: https://api.mattermost.com/ — или через context7 MCP:
+
+```
+mcp__context7__resolve-library-id("mattermost api")
+mcp__context7__query-docs(library_id, topic)
+```
+
+**Если потребовался метод которого нет в скриптах — оповести пользователя**, чтобы скрипт был добавлен.
